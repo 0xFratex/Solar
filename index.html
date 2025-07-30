@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar AI</title>
+    <script src="https://js.puter.com/v2/"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f4f6f8;
+            margin: 0;
+        }
+
+        #chat-container {
+            width: 90%;
+            max-width: 800px;
+            height: 85vh;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+        }
+
+        #header {
+            background: linear-gradient(135deg, #4a90e2, #5468ff);
+            color: white;
+            padding: 16px 24px;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #header h1 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        #model-selection {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 6px 12px;
+            border-radius: 8px;
+        }
+        
+        #model-icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        #model-dropdown {
+            padding: 6px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-weight: 500;
+        }
+        #model-dropdown option {
+            color: black;
+        }
+
+
+        #messages {
+            flex-grow: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message {
+            padding: 12px 18px;
+            border-radius: 18px;
+            max-width: 75%;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+
+        .user-message {
+            background-color: #4a90e2;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .ai-message {
+            background-color: #e9ecef;
+            color: #333;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .error-message {
+            background-color: #ffebee;
+            color: #c62828;
+            align-self: center;
+            text-align: center;
+        }
+
+
+        #input-area {
+            display: flex;
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        #user-input {
+            flex-grow: 1;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            margin-right: 12px;
+            font-size: 16px;
+        }
+
+        #send-button {
+            padding: 12px 24px;
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        #send-button:hover {
+            background-color: #357abd;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="header">
+            <h1>Solar AI</h1>
+            <div id="model-selection">
+                <img id="model-icon" src="https://cdn.jsdelivr.net/gh/lobehub/lobe-icons/assets/Puter.svg" alt="Model Icon">
+                <select id="model-dropdown"></select>
+            </div>
+        </div>
+        <div id="messages">
+             <div class="message ai-message">Hello! I'm Solar AI. Choose a model and ask me anything.</div>
+        </div>
+        <div id="input-area">
+            <input type="text" id="user-input" placeholder="Chat with Solar AI...">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const modelDropdown = document.getElementById('model-dropdown');
+            const modelIcon = document.getElementById('model-icon');
+            const messagesContainer = document.getElementById('messages');
+            const userInput = document.getElementById('user-input');
+            const sendButton = document.getElementById('send-button');
+
+            const API_URL = 'https://api.puter.com/puterai/chat/models';
+
+            const iconMap = {
+                'gpt': 'OpenAI',
+                'claude': 'Claude',
+                'gemini': 'Gemini',
+                'meta-llama': 'Meta',
+                'mistral': 'Mistral',
+                'grok': 'Grok',
+                'deepseek': 'DeepSeek',
+                'o1': 'Ollama',
+                'gemma': 'Gemma',
+                'codestral': 'Codestral',
+                'pixtral': 'Pixtral',
+            };
+
+            function getIconId(modelName) {
+                if (!modelName) return 'Puter';
+                for (const key in iconMap) {
+                    if (modelName.startsWith(key)) {
+                        return iconMap[key];
+                    }
+                }
+                return 'Puter'; // A default icon
+            }
+            
+            function updateIcon(modelName) {
+                const iconId = getIconId(modelName);
+                modelIcon.src = `https://cdn.jsdelivr.net/gh/lobehub/lobe-icons/assets/${iconId}.svg`;
+            }
+
+            fetch(API_URL)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    modelDropdown.innerHTML = ''; // Clear any existing options
+                    const models = data.models || [];
+                    models.forEach(model => {
+                        const option = document.createElement('option');
+                        option.value = model;
+                        option.textContent = model;
+                        modelDropdown.appendChild(option);
+                    });
+                    // Set initial icon based on the first model
+                    if(models.length > 0) {
+                       updateIcon(models[0]);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching models:', error);
+                    appendMessage('Could not load AI models from the API.', 'error-message');
+                });
+
+            modelDropdown.addEventListener('change', () => {
+                updateIcon(modelDropdown.value);
+            });
+
+            sendButton.addEventListener('click', sendMessage);
+            userInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+
+            function sendMessage() {
+                const messageText = userInput.value.trim();
+                if (messageText === '') return;
+
+                appendMessage(messageText, 'user-message');
+                userInput.value = '';
+                userInput.focus();
+
+                const selectedModel = modelDropdown.value;
+                if (!selectedModel) {
+                     appendMessage('Please select a model first.', 'error-message');
+                     return;
+                }
+
+                puter.ai.chat(messageText, { model: selectedModel })
+                    .then(response => {
+                        appendMessage(response, 'ai-message');
+                    })
+                    .catch(error => {
+                        console.error('AI Error:', error);
+                        appendMessage(`Sorry, an error occurred with the AI model. Details: ${error.message}`, 'error-message');
+                    });
+            }
+
+            function appendMessage(text, className) {
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('message', className);
+                messageElement.textContent = text;
+                messagesContainer.appendChild(messageElement);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        });
+    </script>
+</body>
+  </html>
