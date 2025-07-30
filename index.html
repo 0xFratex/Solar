@@ -3,45 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solar AI</title>
+    <title>Solar AI - Fullscreen Streaming</title>
     <script src="https://js.puter.com/v2/"></script>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background-color: #f4f6f8;
+        :root {
+            --primary-color: #4a90e2;
+            --background-color: #f4f6f8;
+            --container-bg: #ffffff;
+            --text-dark: #333;
+            --text-light: #ffffff;
+            --border-color: #e0e0e0;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
             margin: 0;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--background-color);
         }
 
         #chat-container {
-            width: 90%;
-            max-width: 800px;
-            height: 85vh;
-            background-color: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             display: flex;
             flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+            background-color: var(--container-bg);
         }
 
         #header {
-            background: linear-gradient(135deg, #4a90e2, #5468ff);
-            color: white;
-            padding: 16px 24px;
-            border-top-left-radius: 12px;
-            border-top-right-radius: 12px;
+            background: linear-gradient(135deg, var(--primary-color), #5468ff);
+            color: var(--text-light);
+            padding: 12px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 10;
         }
 
         #header h1 {
             margin: 0;
             font-size: 22px;
             font-weight: 600;
+        }
+
+        #model-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        #model-search {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background-color: rgba(255, 255, 255, 0.15);
+            color: var(--text-light);
+            font-size: 14px;
+            width: 200px;
+        }
+        
+        #model-search::placeholder {
+            color: rgba(255, 255, 255, 0.7);
         }
 
         #model-selection {
@@ -56,20 +82,22 @@
         #model-icon {
             width: 24px;
             height: 24px;
+            flex-shrink: 0;
         }
 
         #model-dropdown {
             padding: 6px;
             border-radius: 6px;
             border: 1px solid rgba(255, 255, 255, 0.5);
-            background-color: rgba(255, 255, 255, 0.2);
-            color: white;
+            background-color: transparent;
+            color: var(--text-light);
             font-weight: 500;
+            width: 100%;
         }
         #model-dropdown option {
-            color: black;
+            color: var(--text-dark);
+            background-color: var(--container-bg);
         }
-
 
         #messages {
             flex-grow: 1;
@@ -83,21 +111,27 @@
         .message {
             padding: 12px 18px;
             border-radius: 18px;
-            max-width: 75%;
+            max-width: 80%;
             word-wrap: break-word;
             line-height: 1.5;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .user-message {
-            background-color: #4a90e2;
-            color: white;
+            background-color: var(--primary-color);
+            color: var(--text-light);
             align-self: flex-end;
             border-bottom-right-radius: 4px;
         }
 
         .ai-message {
             background-color: #e9ecef;
-            color: #333;
+            color: var(--text-dark);
             align-self: flex-start;
             border-bottom-left-radius: 4px;
         }
@@ -109,11 +143,26 @@
             text-align: center;
         }
 
+        .blinking-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 1em;
+            background-color: var(--text-dark);
+            margin-left: 4px;
+            border-radius: 2px;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            from, to { background-color: transparent; }
+            50% { background-color: var(--text-dark); }
+        }
 
         #input-area {
             display: flex;
             padding: 20px;
-            border-top: 1px solid #e0e0e0;
+            border-top: 1px solid var(--border-color);
+            flex-shrink: 0;
         }
 
         #user-input {
@@ -127,8 +176,8 @@
 
         #send-button {
             padding: 12px 24px;
-            background-color: #4a90e2;
-            color: white;
+            background-color: var(--primary-color);
+            color: var(--text-light);
             border: none;
             border-radius: 8px;
             cursor: pointer;
@@ -145,9 +194,12 @@
     <div id="chat-container">
         <div id="header">
             <h1>Solar AI</h1>
-            <div id="model-selection">
-                <img id="model-icon" src="https://cdn.jsdelivr.net/gh/lobehub/lobe-icons/assets/Puter.svg" alt="Model Icon">
-                <select id="model-dropdown"></select>
+            <div id="model-controls">
+                <input type="text" id="model-search" placeholder="Search for a model...">
+                <div id="model-selection">
+                    <img id="model-icon" src="https://cdn.jsdelivr.net/gh/lobehub/lobe-icons/assets/Puter.svg" alt="Model Icon">
+                    <select id="model-dropdown"></select>
+                </div>
             </div>
         </div>
         <div id="messages">
@@ -163,34 +215,26 @@
         document.addEventListener('DOMContentLoaded', () => {
             const modelDropdown = document.getElementById('model-dropdown');
             const modelIcon = document.getElementById('model-icon');
+            const modelSearch = document.getElementById('model-search');
             const messagesContainer = document.getElementById('messages');
             const userInput = document.getElementById('user-input');
             const sendButton = document.getElementById('send-button');
 
             const API_URL = 'https://api.puter.com/puterai/chat/models';
+            let allModels = [];
 
             const iconMap = {
-                'gpt': 'OpenAI',
-                'claude': 'Claude',
-                'gemini': 'Gemini',
-                'meta-llama': 'Meta',
-                'mistral': 'Mistral',
-                'grok': 'Grok',
-                'deepseek': 'DeepSeek',
-                'o1': 'Ollama',
-                'gemma': 'Gemma',
-                'codestral': 'Codestral',
-                'pixtral': 'Pixtral',
+                'gpt': 'OpenAI', 'claude': 'Claude', 'gemini': 'Gemini', 'meta-llama': 'Meta',
+                'mistral': 'Mistral', 'grok': 'Grok', 'deepseek': 'DeepSeek', 'o1': 'Ollama',
+                'gemma': 'Gemma', 'codestral': 'Codestral', 'pixtral': 'Pixtral',
             };
 
             function getIconId(modelName) {
                 if (!modelName) return 'Puter';
                 for (const key in iconMap) {
-                    if (modelName.startsWith(key)) {
-                        return iconMap[key];
-                    }
+                    if (modelName.startsWith(key)) return iconMap[key];
                 }
-                return 'Puter'; // A default icon
+                return 'Puter';
             }
             
             function updateIcon(modelName) {
@@ -198,42 +242,40 @@
                 modelIcon.src = `https://cdn.jsdelivr.net/gh/lobehub/lobe-icons/assets/${iconId}.svg`;
             }
 
+            function filterModels() {
+                const searchTerm = modelSearch.value.toLowerCase();
+                const filteredModels = allModels.filter(model => model.toLowerCase().includes(searchTerm));
+                
+                modelDropdown.innerHTML = '';
+                filteredModels.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model;
+                    option.textContent = model;
+                    modelDropdown.appendChild(option);
+                });
+                
+                if (filteredModels.length > 0) {
+                    updateIcon(filteredModels[0]);
+                } else {
+                     updateIcon(null); // Show default icon if no models match
+                }
+            }
+
             fetch(API_URL)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
+                .then(response => response.ok ? response.json() : Promise.reject(`HTTP error! status: ${response.status}`))
                 .then(data => {
-                    modelDropdown.innerHTML = ''; // Clear any existing options
-                    const models = data.models || [];
-                    models.forEach(model => {
-                        const option = document.createElement('option');
-                        option.value = model;
-                        option.textContent = model;
-                        modelDropdown.appendChild(option);
-                    });
-                    // Set initial icon based on the first model
-                    if(models.length > 0) {
-                       updateIcon(models[0]);
-                    }
+                    allModels = data.models || [];
+                    filterModels(); // Initial population
                 })
                 .catch(error => {
                     console.error('Error fetching models:', error);
                     appendMessage('Could not load AI models from the API.', 'error-message');
                 });
 
-            modelDropdown.addEventListener('change', () => {
-                updateIcon(modelDropdown.value);
-            });
-
+            modelSearch.addEventListener('input', filterModels);
+            modelDropdown.addEventListener('change', () => updateIcon(modelDropdown.value));
             sendButton.addEventListener('click', sendMessage);
-            userInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    sendMessage();
-                }
-            });
+            userInput.addEventListener('keypress', (e) => e.key === 'Enter' && sendMessage());
 
             function sendMessage() {
                 const messageText = userInput.value.trim();
@@ -245,23 +287,52 @@
 
                 const selectedModel = modelDropdown.value;
                 if (!selectedModel) {
-                     appendMessage('Please select a model first.', 'error-message');
+                     appendMessage('Please select a valid model first.', 'error-message');
                      return;
                 }
+                
+                // --- Streaming Logic ---
+                const aiMessageElement = document.createElement('div');
+                aiMessageElement.className = 'message ai-message';
+                
+                const contentSpan = document.createElement('span');
+                aiMessageElement.appendChild(contentSpan);
+                
+                const cursorSpan = document.createElement('span');
+                cursorSpan.className = 'blinking-cursor';
+                aiMessageElement.appendChild(cursorSpan);
+                
+                messagesContainer.appendChild(aiMessageElement);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-                puter.ai.chat(messageText, { model: selectedModel })
-                    .then(response => {
-                        appendMessage(response, 'ai-message');
-                    })
-                    .catch(error => {
-                        console.error('AI Error:', error);
-                        appendMessage(`Sorry, an error occurred with the AI model. Details: ${error.message}`, 'error-message');
-                    });
+
+                puter.ai.chat(messageText, { 
+                    model: selectedModel,
+                    stream: true,
+                    onStream: (chunk) => {
+                        contentSpan.textContent += chunk;
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    }
+                })
+                .then(() => {
+                    cursorSpan.remove(); // Remove cursor when streaming is complete
+                })
+                .catch(error => {
+                    console.error('AI Error:', error);
+                    const errorText = `Sorry, an error occurred. Details: ${error.message}`;
+                    if (contentSpan.textContent === '') {
+                        contentSpan.textContent = errorText;
+                        aiMessageElement.classList.add('error-message');
+                    } else {
+                        appendMessage(errorText, 'error-message');
+                    }
+                    cursorSpan.remove();
+                });
             }
 
             function appendMessage(text, className) {
                 const messageElement = document.createElement('div');
-                messageElement.classList.add('message', className);
+                messageElement.className = `message ${className}`;
                 messageElement.textContent = text;
                 messagesContainer.appendChild(messageElement);
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -269,4 +340,4 @@
         });
     </script>
 </body>
-  </html>
+</html>
